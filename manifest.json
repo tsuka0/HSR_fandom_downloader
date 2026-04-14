@@ -1,0 +1,30 @@
+﻿{
+  "manifest_version": 3,
+  "name": "HSR fandom downloader",
+  "version": "0.1.0",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png"
+    }
+  },
+  "description": "スタレのfandomページの音声と画像を引っこ抜きます",
+  "content_scripts": [
+    {
+      "matches": ["https://honkai-star-rail.fandom.com/wiki/*"],
+      "js": ["jszip.min.js", "content.js"]
+    }
+  ],
+  "host_permissions": [
+    "https://honkai-star-rail.fandom.com/*",
+    "https://static.wikia.nocookie.net/*",
+    "https://static.wikia.com/*"
+  ]
+}
