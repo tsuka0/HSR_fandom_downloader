@@ -11,7 +11,11 @@
 準備が終わりました！
 
 # 使用方法
-ダウンロードしたいキャラのwikiページに飛んでください
+ダウンロードしたいキャラのwikiページに飛んでください  
 例 : [長夜月]( https://honkai-star-rail.fandom.com/wiki/Evernight )
+そしたら右上にこんな奴があるので押しましょう
+<img width="314" height="220" alt="image" src="https://github.com/user-attachments/assets/ab7f13de-725b-4ca5-82e7-42e51131d3d1" />
+
+
 
 
