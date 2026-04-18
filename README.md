@@ -20,6 +20,9 @@
   
 キャラ名.zipのダウンロード先を聞かれるので保存しましょう
 <img width="294" height="92" alt="image" src="https://github.com/user-attachments/assets/908fb3b5-2cc5-4a19-b961-23ad8fc57a3a" />
+解凍したら終了です、お疲れ様でした！
+<img width="1070" height="346" alt="image" src="https://github.com/user-attachments/assets/72a98fce-6ce9-4f3b-9658-67acd0da4ae3" />
+
 
 
 
