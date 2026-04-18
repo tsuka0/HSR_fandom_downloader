@@ -17,6 +17,7 @@
 <img width="314" height="220" alt="image" src="https://github.com/user-attachments/assets/ab7f13de-725b-4ca5-82e7-42e51131d3d1" />
 解析、ダウンロードが始まるので待ちましょう  
 (途中でページを更新したり変えたりするとキャンセルされます)  
+  
 キャラ名.zipのダウンロード先を聞かれるので保存しましょう
 <img width="294" height="92" alt="image" src="https://github.com/user-attachments/assets/908fb3b5-2cc5-4a19-b961-23ad8fc57a3a" />
 
