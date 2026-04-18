@@ -1,62 +1,81 @@
-﻿(() => {
-  const getPageSlug = () => {
+(() => {
+  const fetchPageSlug = () => {
     const match = location.pathname.match(/^\/wiki\/([^/]+)$/);
     return match ? decodeURIComponent(match[1]) : null;
   };
 
-  const pageSlug = getPageSlug();
+  const pageSlug = fetchPageSlug();
   if (!pageSlug) return;
 
-  const ui = document.createElement("div");
-  ui.style.position = "fixed";
-  ui.style.top = "16px";
-  ui.style.right = "16px";
-  ui.style.zIndex = "999999";
-  ui.style.background = "#0b0f1a";
-  ui.style.color = "#f2f2f2";
-  ui.style.border = "1px solid #2a3350";
-  ui.style.borderRadius = "10px";
-  ui.style.padding = "10px 12px";
-  ui.style.fontSize = "13px";
-  ui.style.fontFamily = "system-ui, sans-serif";
-  ui.style.boxShadow = "0 6px 20px rgba(0,0,0,0.35)";
-  ui.style.maxWidth = "260px";
-
-  const title = document.createElement("div");
-  title.textContent = "スタレ音声+画像";
-  title.style.fontWeight = "600";
-  title.style.marginBottom = "6px";
-  ui.appendChild(title);
-
-  const button = document.createElement("button");
-  button.textContent = "ダウンロードしよ！";
-  button.style.background = "#2d6cdf";
-  button.style.color = "#fff";
-  button.style.border = "0";
-  button.style.padding = "6px 10px";
-  button.style.borderRadius = "8px";
-  button.style.cursor = "pointer";
-  button.style.fontSize = "13px";
-  ui.appendChild(button);
-
-  const status = document.createElement("div");
-  status.textContent = "待ってます";
-  status.style.marginTop = "8px";
-  status.style.opacity = "0.9";
-  status.style.whiteSpace = "pre-wrap";
-  ui.appendChild(status);
-
-  document.body.appendChild(ui);
-
-  const setStatus = (text) => {
-    status.textContent = text;
+  const buildUI = () => {
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.top = "16px";
+    container.style.right = "16px";
+    container.style.zIndex = "999999";
+    container.style.background = "#0b0f1a";
+    container.style.color = "#f2f2f2";
+    container.style.border = "1px solid #2a3350";
+    container.style.borderRadius = "10px";
+    container.style.padding = "10px 12px";
+    container.style.fontSize = "13px";
+    container.style.fontFamily = "system-ui, sans-serif";
+    container.style.boxShadow = "0 6px 20px rgba(0,0,0,0.35)";
+    container.style.maxWidth = "260px";
+    return container;
   };
 
-  const safeName = (name) => {
+  const uiContainer = buildUI();
+
+  const createHeader = () => {
+    const header = document.createElement("div");
+    header.textContent = "スタレ音声+画像";
+    header.style.fontWeight = "600";
+    header.style.marginBottom = "6px";
+    return header;
+  };
+
+  uiContainer.appendChild(createHeader());
+
+  const createDownloadButton = () => {
+    const btn = document.createElement("button");
+    btn.textContent = "ダウンロードしよ！";
+    btn.style.background = "#2d6cdf";
+    btn.style.color = "#fff";
+    btn.style.border = "0";
+    btn.style.padding = "6px 10px";
+    btn.style.borderRadius = "8px";
+    btn.style.cursor = "pointer";
+    btn.style.fontSize = "13px";
+    return btn;
+  };
+
+  const downloadBtn = createDownloadButton();
+  uiContainer.appendChild(downloadBtn);
+
+  const createStatusDisplay = () => {
+    const display = document.createElement("div");
+    display.textContent = "待ってます";
+    display.style.marginTop = "8px";
+    display.style.opacity = "0.9";
+    display.style.whiteSpace = "pre-wrap";
+    return display;
+  };
+
+  const statusDisplay = createStatusDisplay();
+  uiContainer.appendChild(statusDisplay);
+
+  document.body.appendChild(uiContainer);
+
+  const updateStatus = (text) => {
+    statusDisplay.textContent = text;
+  };
+
+  const sanitizeFilename = (name) => {
     return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "character";
   };
 
-  const normalizeToken = (value) => {
+  const normalizeTextToken = (value) => {
     return decodeURIComponent(value || "")
       .toLowerCase()
       .replace(/\([^)]*\)/g, " ")
@@ -66,16 +85,16 @@
       .trim();
   };
 
-  const getCharacterName = () => {
+  const extractCharacterNameFromPage = () => {
     const h1 = document.querySelector("#firstHeading");
     if (h1 && h1.textContent) return h1.textContent.trim();
     const title = document.title || "character";
     return title.split("-")[0].trim();
   };
 
-  const looksLikeCharacterPage = () => {
-    const normalizedSlug = normalizeToken(pageSlug);
-    const normalizedHeading = normalizeToken(getCharacterName());
+  const isCharacterPage = () => {
+    const normalizedSlug = normalizeTextToken(pageSlug);
+    const normalizedHeading = normalizeTextToken(extractCharacterNameFromPage());
     if (!normalizedSlug || !normalizedHeading) return false;
     if (normalizedSlug === normalizedHeading) return true;
     if (normalizedHeading.includes(normalizedSlug) || normalizedSlug.includes(normalizedHeading)) {
@@ -92,9 +111,9 @@
     return /playable characters|characters|character/.test(categoriesText);
   };
 
-  if (!looksLikeCharacterPage()) return;
+  if (!isCharacterPage()) return;
 
-  const normalizeUrl = (url) => {
+  const resolveAbsoluteUrl = (url) => {
     if (!url) return null;
     if (url.startsWith("//")) return "https:" + url;
     try {
@@ -104,9 +123,7 @@
     }
   };
 
-  const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
-
-  const filenameFromUrl = (url) => {
+  const extractFilenameFromUrl = (url) => {
     try {
       const u = new URL(url);
       const path = u.pathname.split("/");
@@ -118,148 +135,131 @@
     }
   };
 
-  const extractVoiceEntries = (doc) => {
+  const extractVoiceItems = (doc) => {
     const entries = [];
-    const seen = new Set();
+    const seenUrls = new Set();
 
-//こんなクソコードでごめん、これしか思いつかんかったんだ
-    const cleanDetailsText = (text) => {
-      return (text || "")
-        .replace(/https?:\/\/\S+/gi, " ")
-        .replace(/\b[a-z0-9_-]+\.(ogg|mp3|wav)\b/gi, " ")
-        .replace(/\bFile:\S+/gi, " ")
-        .replace(/[▶▷►▸▹]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    };
-
-    const findDetailsText = (el) => {
-      if (!el) return "";
-      const row = el.closest("tr");
-      if (row) {
-        const table = row.closest("table");
-        if (table) {
-          const allRows = Array.from(table.querySelectorAll("tr"));
-          const headerRow = allRows.find((tr) =>
-            Array.from(tr.children).some((cell) =>
-              (cell.textContent || "").trim().toLowerCase().includes("details")
-            )
-          );
-          if (headerRow) {
-            const headers = Array.from(headerRow.children);
-            const detailsIndex = headers.findIndex((h) =>
-              (h.textContent || "").trim().toLowerCase().includes("details")
-            );
-            if (detailsIndex >= 0) {
-              const cells = Array.from(row.children);
-              const cell = cells[detailsIndex];
-              if (cell) {
-                return cleanDetailsText(cell.textContent || "");
-              }
-            }
-          }
+    const extractJapaneseText = (el) => {
+      const trElement = el.closest('tr');
+      if (!trElement) return '';
+      
+      const spans = trElement.querySelectorAll('span[lang="ja"]');
+      if (spans.length > 0) {
+        let fileName = spans[spans.length - 1].textContent.trim();
+        if (fileName.startsWith('▶')) {
+          fileName = fileName.slice(1).trim();
         }
+        return fileName;
       }
-
-      const label = el.closest("tr, li, div")?.querySelector(
-        "*:is(dt, th, div, span)"
-      );
-      if (label && (label.textContent || "").trim().toLowerCase() === "details") {
-        const next = label.nextElementSibling;
-        if (next) return cleanDetailsText(next.textContent || "");
-      }
-
-      return "";
+      return '';
     };
 
-    const add = (src, line) => {
-      const url = normalizeUrl(src);
+    const addVoiceEntry = (src, el) => {
+      const url = resolveAbsoluteUrl(src);
       if (!url) return;
-      const name = filenameFromUrl(url).toLowerCase();
+      const name = extractFilenameFromUrl(url).toLowerCase();
       if (!name.startsWith("latest")) return;
-      if (seen.has(url)) return;
-      seen.add(url);
-      entries.push({ url, line: line || "" });
+      if (seenUrls.has(url)) return;
+      seenUrls.add(url);
+      
+      let jpText = extractJapaneseText(el);
+      entries.push({ url, line: jpText || '' });
     };
 
     doc.querySelectorAll("audio, audio source").forEach((el) => {
       const src = el.getAttribute("src") || el.getAttribute("data-src");
-      const line = findDetailsText(el);
-      if (src) add(src, line);
+      if (src) addVoiceEntry(src, el);
     });
 
     doc.querySelectorAll("a").forEach((a) => {
       const href = a.getAttribute("href") || "";
       if (href.match(/\.(mp3|ogg|wav)(\?|$)/i)) {
-        const line = findDetailsText(a);
-        add(href, line);
+        addVoiceEntry(href, a);
       }
     });
 
     return entries;
   };
 
-  const extractMediaUrls = (doc, nameTokens) => {
-    const urls = [];
+  // API使ってます
+  const extractImageFiles = (doc) => {
+    const imageFiles = new Set();
 
-    const tokenMatch = (text) => {
-      const lower = (text || "").toLowerCase();
-      return nameTokens.some((t) => t && lower.includes(t));
-    };
+    doc.querySelectorAll('a[href*="/wiki/File:"]').forEach((a) => {
+      const href = a.getAttribute("href");
+      if (!href) return;
 
-    // Prefer file links from the Media page to avoid unrelated site assets
-    doc
-      .querySelectorAll(
-        ".category-page__members a, .mw-category-generated a, .gallerybox a, a[href*=\"/wiki/File:\"]"
-      )
-      .forEach((a) => {
-        const href = a.getAttribute("href") || "";
-        if (!href.includes("/wiki/File:")) return;
-        const fileName = decodeURIComponent(href.split("/wiki/File:")[1] || "");
-        if (!tokenMatch(fileName)) return;
-        // Use the thumbnail or full static URL if present
-        const img = a.querySelector("img");
-        const src = img ? img.getAttribute("data-src") || img.getAttribute("src") : null;
-        if (src) urls.push(normalizeUrl(src));
-      });
+      const fileName = decodeURIComponent(href.split("/wiki/File:")[1] || "");
 
-    // Fallback: pick inline images/videos that include the character token
-    doc.querySelectorAll("img").forEach((img) => {
-      const src = img.getAttribute("data-src") || img.getAttribute("src");
-      const file = filenameFromUrl(normalizeUrl(src || "") || "");
-      if (src && tokenMatch(file)) urls.push(normalizeUrl(src));
-      const srcset = img.getAttribute("srcset");
-      if (srcset) {
-        srcset.split(",").forEach((part) => {
-          const u = part.trim().split(" ")[0];
-          const f = filenameFromUrl(normalizeUrl(u) || "");
-          if (u && tokenMatch(f)) urls.push(normalizeUrl(u));
-        });
+      if (/\.(mp4|webm|ogv)$/i.test(fileName)) return;
+      if (!/\.(png|webp|gif|jpg|jpeg)$/i.test(fileName)) return;
+
+      imageFiles.add(fileName);
+    });
+
+    return Array.from(imageFiles);
+  };
+
+  const fetchImageUrlsFromApi = async (fileNames) => {
+    const results = [];
+
+    if (fileNames.length === 0) return results;
+
+    const chunks = Array.from(
+      { length: Math.ceil(fileNames.length / 50) },
+      (_, i) => fileNames.slice(i * 50, i * 50 + 50)
+    );
+
+    for (const chunk of chunks) {
+      const titles = chunk.map((name) => `File:${name}`).join("|");
+
+      const apiUrl = `${location.origin}/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url&format=json`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        for (const pageId in data.query.pages) {
+          const page = data.query.pages[pageId];
+          const imageInfo = page.imageinfo?.[0];
+          
+          if (imageInfo && imageInfo.url) {
+            results.push({
+              url: imageInfo.url,
+              fileName: page.title.replace("File:", ""),
+            });
+          }
+        }
+      } catch (err) {
+        console.error("API fetch error:", err);
       }
-    });
+    }
 
-    doc.querySelectorAll("video source").forEach((source) => {
-      const src = source.getAttribute("src") || source.getAttribute("data-src");
-      const file = filenameFromUrl(normalizeUrl(src || "") || "");
-      if (src && tokenMatch(file)) urls.push(normalizeUrl(src));
-    });
-
-    return uniq(urls);
+    return results;
   };
 
-  const fetchDoc = async (url) => {
-    const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) throw new Error(`Fetch failed: ${url}`);
-    const html = await res.text();
-    return new DOMParser().parseFromString(html, "text/html");
+  const fetchDocumentSafe = async (url) => {
+    try {
+      const res = await fetch(url, { credentials: "omit" });
+      if (!res.ok) {
+        if (res.status === 404) {
+          return null;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const html = await res.text();
+      return new DOMParser().parseFromString(html, "text/html");
+    } catch (err) {
+      return null;
+    }
   };
 
-  const mapWithConcurrency = async (items, limit, worker) => {
+  const processConcurrently = async (items, limit, worker) => {
     const results = new Array(items.length);
     let i = 0;
     let active = 0;
     return new Promise((resolve, reject) => {
-      const next = () => {
+      const runNext = () => {
         if (i >= items.length && active === 0) {
           resolve(results);
           return;
@@ -271,46 +271,49 @@
             .then((res) => {
               results[idx] = res;
               active--;
-              next();
+              runNext();
             })
             .catch(reject);
         }
       };
-      next();
+      runNext();
     });
   };
 
-  const sanitizeLine = (text) => {
-    const cleaned = (text || "")
-      .replace(/[▶▷►▸▹]/g, " ")
+  const sanitizeLineText = (text) => {
+    if (!text || text.length === 0) return null;
+    
+    let cleaned = text
+      .replace(/[▶▷►▸▹]/g, "")
       .replace(/[\\/:*?"<>|]/g, "_")
       .replace(/\s+/g, " ")
       .trim();
-    if (!cleaned) return "voice";
+    
+    if (!cleaned || cleaned.length === 0) return null;
     return cleaned.slice(0, 180);
   };
 
-  const encodeWav = (audioBuffer) => {
+  const convertAudioBufferToWav = (audioBuffer) => {
     const numChannels = audioBuffer.numberOfChannels;
     const sampleRate = audioBuffer.sampleRate;
     const length = audioBuffer.length * numChannels * 2;
     const buffer = new ArrayBuffer(44 + length);
     const view = new DataView(buffer);
 
-    const writeString = (offset, str) => {
+    const writeStringToView = (offset, str) => {
       for (let i = 0; i < str.length; i++) {
         view.setUint8(offset + i, str.charCodeAt(i));
       }
     };
 
     let offset = 0;
-    writeString(offset, "RIFF");
+    writeStringToView(offset, "RIFF");
     offset += 4;
     view.setUint32(offset, 36 + length, true);
     offset += 4;
-    writeString(offset, "WAVE");
+    writeStringToView(offset, "WAVE");
     offset += 4;
-    writeString(offset, "fmt ");
+    writeStringToView(offset, "fmt ");
     offset += 4;
     view.setUint32(offset, 16, true);
     offset += 4;
@@ -326,7 +329,7 @@
     offset += 2;
     view.setUint16(offset, 16, true);
     offset += 2;
-    writeString(offset, "data");
+    writeStringToView(offset, "data");
     offset += 4;
     view.setUint32(offset, length, true);
     offset += 4;
@@ -348,10 +351,9 @@
     return new Blob([buffer], { type: "audio/wav" });
   };
 
-  const isAnimatedWebP = (arrayBuffer) => {
+  const isAnimatedWebp = (arrayBuffer) => {
     const bytes = new Uint8Array(arrayBuffer);
     if (bytes.length < 16) return false;
-    // Look for "ANIM" chunk
     for (let i = 0; i < bytes.length - 4; i++) {
       if (
         bytes[i] === 0x41 &&
@@ -365,7 +367,7 @@
     return false;
   };
 
-  const decodeImageToPng = async (blob) => {
+  const convertImageToPng = async (blob) => {
     const bitmap = await createImageBitmap(blob);
     const canvas = document.createElement("canvas");
     canvas.width = bitmap.width;
@@ -377,64 +379,89 @@
     return pngBlob || blob;
   };
 
-  const downloadIntoZip = async (items, folder, label, opts = {}) => {
+  const downloadItemsToZip = async (items, folder, label, opts = {}) => {
     const nameCount = new Map();
     let done = 0;
     let failed = 0;
 
     const audioCtx = opts.kind === "audio" ? new AudioContext() : null;
 
-    await mapWithConcurrency(items, 4, async (item) => {
+    if (items.length === 0) return { done, failed };
+
+    await processConcurrently(items, 4, async (item) => {
       const url = typeof item === "string" ? item : item.url;
-      setStatus(`${label} ダウンロード中... ${done}/${items.length}`);
+      updateStatus(`${label} ダウンロード中... ${done}/${items.length}`);
       try {
         const res = await fetch(url, { credentials: "omit" });
         if (!res.ok) throw new Error(`Bad status ${res.status}`);
         let blob = await res.blob();
 
-        let filename = filenameFromUrl(url);
+        let filename;
         if (opts.kind === "audio") {
-          const line = typeof item === "string" ? "" : item.line;
-          filename = `${sanitizeLine(line)}.wav`;
+          let line = typeof item === "string" ? "" : item.line;
+          let baseName = sanitizeLineText(line);
+          
+          if (!baseName) {
+            baseName = "voice";
+          }
+          
+          let count = nameCount.get(baseName) || 0;
+          if (count === 0) {
+            filename = `${baseName}.wav`;
+          } else {
+            filename = `(${count + 1}x) ${baseName}.wav`;
+          }
+          nameCount.set(baseName, count + 1);
+          
           const arrayBuffer = await blob.arrayBuffer();
           const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-          blob = encodeWav(audioBuffer);
-        } else if (opts.kind === "media") {
-          const isWebp = blob.type === "image/webp" || filename.toLowerCase().endsWith(".webp");
-          if (isWebp) {
-            const arrayBuffer = await blob.arrayBuffer();
-            const animated = isAnimatedWebP(arrayBuffer);
-            if (!animated) {
-              blob = await decodeImageToPng(new Blob([arrayBuffer], { type: blob.type }));
-              if (filename.match(/\.[a-z0-9]+$/i)) {
-                filename = filename.replace(/\.[a-z0-9]+$/i, ".png");
-              } else {
-                filename = `${filename}.png`;
+          blob = convertAudioBufferToWav(audioBuffer);
+        } else {
+          filename = item.fileName || extractFilenameFromUrl(url);
+          const originalExt = filename.split('.').pop().toLowerCase();
+          const arrayBuffer = await blob.arrayBuffer();
+          
+          if (originalExt === 'webp' || blob.type === 'image/webp') {
+            const isAnimated = isAnimatedWebp(arrayBuffer);
+            
+            if (isAnimated) {
+              if (!filename.toLowerCase().endsWith('.webp')) {
+                filename = filename.replace(/\.[^.]*$/, '') + '.webp';
+              }
+            } else {
+              blob = await convertImageToPng(new Blob([arrayBuffer], { type: blob.type }));
+              filename = filename.replace(/\.webp$/i, '.png');
+              if (!filename.toLowerCase().endsWith('.png')) {
+                filename = filename.replace(/\.[^.]*$/, '') + '.png';
               }
             }
-          }
-        }
-
-        if (!filename.match(/\.[a-z0-9]+$/i)) {
-          const ext = blob.type.split("/")[1];
-          if (ext) filename += `.${ext}`;
-        }
-
-        const key = filename.toLowerCase();
-        const count = (nameCount.get(key) || 0) + 1;
-        nameCount.set(key, count);
-        if (count > 1) {
-          const dot = filename.lastIndexOf(".");
-          if (dot > 0) {
-            filename = `${filename.slice(0, dot)}_${count}${filename.slice(dot)}`;
+          } else if (originalExt === 'gif' || blob.type === 'image/gif') {
+            if (!filename.toLowerCase().endsWith('.gif')) {
+              filename = filename.replace(/\.[^.]*$/, '') + '.gif';
+            }
           } else {
-            filename = `${filename}_${count}`;
+            if (!filename.match(/\.[a-z0-9]+$/i)) {
+              const ext = blob.type.split("/")[1];
+              if (ext) filename += `.${ext}`;
+            }
+          }
+          
+          const key = filename.toLowerCase();
+          const count = (nameCount.get(key) || 0) + 1;
+          nameCount.set(key, count);
+          if (count > 1) {
+            const dot = filename.lastIndexOf(".");
+            if (dot > 0) {
+              filename = `(${count}x) ${filename.slice(0, dot)}${filename.slice(dot)}`;
+            } else {
+              filename = `(${count}x) ${filename}`;
+            }
           }
         }
 
         folder.file(filename, blob);
         done++;
-      } catch {
+      } catch (err) {
         failed++;
         done++;
       }
@@ -449,78 +476,95 @@
     return { done, failed };
   };
 
-  button.addEventListener("click", async () => {
-    button.disabled = true;
-    button.style.opacity = "0.7";
+  downloadBtn.addEventListener("click", async () => {
+    downloadBtn.disabled = true;
+    downloadBtn.style.opacity = "0.7";
 
     try {
-      setStatus("ページを調べてます、待っててね...");
-      const headingName = getCharacterName();
-      const characterName = safeName(headingName);
+      updateStatus("ページを調べてます...");
+      const headingName = extractCharacterNameFromPage();
+      const characterName = sanitizeFilename(headingName);
       const rawPageSlug = decodeURIComponent(pageSlug);
       const nameTokens = [
-        normalizeToken(headingName),
-        normalizeToken(rawPageSlug),
-        normalizeToken(rawPageSlug.replace(/\s*\([^)]*\)\s*/g, " "))
+        normalizeTextToken(headingName),
+        normalizeTextToken(rawPageSlug),
+        normalizeTextToken(rawPageSlug.replace(/\s*\([^)]*\)\s*/g, " "))
       ].filter(Boolean);
 
       const encodedSlug = encodeURIComponent(rawPageSlug);
-      const voiceUrl = `${location.origin}/wiki/${encodedSlug}/Voice-Overs/Japanese`;
-      const mediaUrl = `${location.origin}/wiki/${encodedSlug}/Media`;
+      const voicePageUrl = `${location.origin}/wiki/${encodedSlug}/Voice-Overs/Japanese`;
+      const mediaPageUrl = `${location.origin}/wiki/${encodedSlug}/Media`;
 
+      updateStatus("ページを取得中...");
+      
       const [voiceDoc, mediaDoc] = await Promise.all([
-        fetchDoc(voiceUrl),
-        fetchDoc(mediaUrl)
+        fetchDocumentSafe(voicePageUrl),
+        fetchDocumentSafe(mediaPageUrl)
       ]);
 
-      const voiceEntries = extractVoiceEntries(voiceDoc);
-      const mediaUrls = extractMediaUrls(mediaDoc, nameTokens);
+      let voiceEntries = [];
+      let mediaItems = [];
 
-      if (voiceEntries.length === 0 && mediaUrls.length === 0) {
-        setStatus("データが見つからなかった！");
+      if (voiceDoc) {
+        updateStatus("音声を抽出中...");
+        voiceEntries = extractVoiceItems(voiceDoc);
+      }
+
+      if (mediaDoc) {
+        updateStatus("画像を抽出中...");
+        const imageFiles = extractImageFiles(mediaDoc);
+        
+        if (imageFiles.length > 0) {
+          updateStatus(`画像URLを取得中... (${imageFiles.length}件)`);
+          mediaItems = await fetchImageUrlsFromApi(imageFiles);
+        }
+      }
+
+      if (voiceEntries.length === 0 && mediaItems.length === 0) {
+        updateStatus("データが見つからなかった！");
         return;
       }
 
-      const zip = new JSZip();
-      const root = zip.folder(characterName);
-      const voiceFolder = root.folder("セリフ素材");
-      const mediaFolder = root.folder("画像");
+      const zipArchive = new JSZip();
+      const rootFolder = zipArchive.folder(characterName);
+      
+      if (voiceEntries.length > 0) {
+        const voiceFolder = rootFolder.folder("セリフ素材");
+        await downloadItemsToZip(voiceEntries, voiceFolder, "音声", { kind: "audio" });
+      }
+      
+      if (mediaItems.length > 0) {
+        const mediaFolder = rootFolder.folder("画像");
+        await downloadItemsToZip(mediaItems, mediaFolder, "画像", { kind: "media" });
+      }
 
-      setStatus(`音声 ${voiceEntries.length}件 / 画像・動画 ${mediaUrls.length}件`);
-
-      const voiceResult = await downloadIntoZip(voiceEntries, voiceFolder, "音声", {
-        kind: "audio"
-      });
-      const mediaResult = await downloadIntoZip(mediaUrls, mediaFolder, "画像", {
-        kind: "media"
-      });
-
-      setStatus("ZIPにしてるよ...");
-      const zipBlob = await zip.generateAsync(
+      updateStatus("ZIP作成中...");
+      const zipBlob = await zipArchive.generateAsync(
         { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
         (meta) => {
           const pct = Math.floor(meta.percent || 0);
-          setStatus(`ZIPにしてるよ... ${pct}%`);
+          updateStatus(`ZIP作成中... ${pct}%`);
         }
       );
 
       const downloadUrl = URL.createObjectURL(zipBlob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `${characterName}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `${characterName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
 
-      setStatus(
-        `出来たぞ、音声 ${voiceResult.done}件(失敗${voiceResult.failed}) / 画像・動画 ${mediaResult.done}件(無理ぽ${mediaResult.failed})`
-      );
+      const voiceMsg = voiceEntries.length > 0 ? `音声 ${voiceEntries.length}件` : "";
+      const mediaMsg = mediaItems.length > 0 ? `画像 ${mediaItems.length}件` : "";
+      updateStatus(`完了！ ${voiceMsg} ${mediaMsg}`.trim());
+      
     } catch (err) {
-      setStatus(`エラー: ${err.message || err}`);
+      updateStatus(`エラー: ${err.message || err}`);
     } finally {
-      button.disabled = false;
-      button.style.opacity = "1";
+      downloadBtn.disabled = false;
+      downloadBtn.style.opacity = "1";
     }
   });
 })();
