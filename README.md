@@ -6,3 +6,6 @@
 <img width="691" height="544" alt="image" src="https://github.com/user-attachments/assets/e556cf9a-8307-42a0-9baa-70ab4ea0a1cb" />
 3.一部Edgeなどないブラウザもありますが、右上にディベロッパーモードというスライダーがある場合オンにしてください
 <img width="366" height="306" alt="image" src="https://github.com/user-attachments/assets/cbfa0786-5c85-4f04-9a77-9bc4a0116320" />
+4.ダウンロードしたcrxファイルをドラッグアンドドロップして追加してください
+<img width="585" height="272" alt="image" src="https://github.com/user-attachments/assets/e7320a5c-0254-476b-9a71-709aa2a3ff8b" />
+
